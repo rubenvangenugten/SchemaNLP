@@ -11,6 +11,8 @@ Data setup when using code:
 You will need to edit the code to point to your csv file. Your scores will be written out in the same folder as your code.
 Even if you do not edit the code, please read through the comments in the code before use, since they provide some helpful context for what it's doing.
 
-Your computer should have extra space on it: downloading GloVe, which we use for creating the dictionaries, will take up at least 2gb. Please note that the code takes quite a while to run, so just have it run overnight.
+Last, you need to download GloVe before running the code. This will be updated in the future so that you do not have to do so manually. In the meantime, click [here](https://huggingface.co/stanfordnlp/glove/resolve/main/glove.42B.300d.zip) to download. Then, unzip the file and place it in the same folder as your code.
+
+Your computer should have extra space on it: downloading GloVe, which we use for creating the dictionaries, will take up ~ 6GB. Please note that the code takes quite a while to run, so just have it run overnight.
 
 The code provided here will produce scores according with methods described in Wynn et al., 2022. Additional code for validation of the measure will be uploaded soon.
