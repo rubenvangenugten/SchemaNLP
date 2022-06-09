@@ -7,7 +7,7 @@
 
 
 # Data setup when using code.
-# input .csv file with:
+# input transcriptions_all.csv file with:
 # four columns: Subject, Trial,	Cue, Transcript
 # Subject is a number, trial is a number, cue is word, and transcript is the text.
 
@@ -62,18 +62,15 @@ p_load("openxlsx", "dplyr",
 
 #### ---- Read in data ---- ####
 
-# must provide your folder location here:
+# must provide your folder location here (or just place it in the same folder as your code):
 
-story <- read.csv('../../trascriptions_all.csv')
+story <- read.csv('trascriptions_all.csv')
 
 #### ----- Read in Glove matrix----- ####
 
 # reading in glove data takes a while
 
-load(url('../glove.Rdata'))
-
-load('../glove.Rdata')
-
+load('glove.Rdata')
 
 
 #### ---- Define non-tidytext stopwords to remove ---- ####
@@ -215,9 +212,12 @@ for(cue in allCues){
   cue_topSimilarities[[cue]] <- find_similar_words(cue, embedding_matrix, numSimilarWords)
 }
 
-# if we want all the data up to this point, just uncomment load()
+# the above takes a while to run. So you can save it once you've run it, by uncommenting:
 #save.image('glove_plus_cue_similarities.Rdata')
-#load('glove_plus_cue_similarities.Rdata')
+
+# then, to avoid having to rerun everything again in the future, just uncomment and run:
+#load('glove_plus_cue_similarities.Rdata'
+)
 
 # save out the word lists used for calculating schema scores,
 # so that it is easy to look through for a sanity check.
