@@ -20,3 +20,5 @@ Last, you need to download GloVe before running the code. You can find the .Rdat
 Your computer should have extra space on it: downloading GloVe, which we use for creating the dictionaries, will take up ~ 3GB. Please note that the code takes quite a while to run, so just have it run overnight.
 
 The code provided here will produce scores according with methods described in Wynn et al., 2022. Additional code for validation of the measure will be uploaded soon. Glove.Rdata will also be added to github soon, so that manual download from the google drive link above is no longer necessary.
+
+Feel free to reach out to the authors with any questions. We can be contacted at ruben_vangenugten@g.harvard.edu and jordwynn@uvic.ca
