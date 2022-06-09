@@ -2,7 +2,10 @@
 Automated Scoring of Schematic Content using Natural Language Processing.
 
 Remembering past events and imagining future events requires individuals to draw on their knowledge of what typically happens in a situation (i.e., schemas). To enable researchers to study schemas, we developed a measure of typical content in narratives. We used GloVe to create large dictionaries of relevant content (e.g., containing words like “sand” and “waves” for the memory cue ‘beach’) and counted overlapping narrative and dictionary words. We used this measure in a recent study ([Wynn et al., 2022](https://www.sciencedirect.com/science/article/pii/S1053810022000344?casa_token=x0LIK_gDaRsAAAAA:6LItAH6udi70-SEGwkJ3i3QAlHiqvzMIz9cPwRVPGzZch0Wgb-Ucf49ktBYPjMs4mdY9lSv-mQ)) with a more comprehensive validation currently underway.
-
+  
+  
+Practicalities
+  
 Data setup when using code:  
  -- .csv file with:  
    -- four columns entitled Subject, Trial,	Cue, Transcript  
