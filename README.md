@@ -21,4 +21,4 @@ Your computer should have extra space on it: downloading GloVe, which we use for
 
 The code provided here will produce scores according with methods described in Wynn et al., 2022. Additional code used for validation of the measure in the paper will be uploaded soon. Glove.Rdata will also be added to github soon, so that manual download from the google drive link above is no longer necessary.
 
-Feel free to reach out to the authors with any questions. We can be contacted at ruben_vangenugten@g.harvard.edu and jordwynn@uvic.ca
+Feel free to reach out to the authors with any questions. We can be contacted at r.vangenugten@northeastern.edu and jordwynn@uvic.ca
