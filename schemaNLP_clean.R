@@ -1,180 +1,153 @@
 #---
 # Author: Ruben van Genugten
 # Title: "Automated Scoring of Schematic Content using Natural Language Processing"
-# Code for use in Wynn et al. (2022) (https://www.sciencedirect.com/science/article/abs/pii/S1053810022000344)
-# date: "1/28/2021"
+# Code for use in Wynn et al. (2022)
+# Updated on 11/27/24 to improve readability and usability
 #---
 
+# Data Setup:
+# Input file: 'transcriptions_all.csv' with the following columns:
+# - Subject: Numeric identifier for the subject
+# - Trial: Numeric identifier for the trial
+# - Cue: The cue word or phrase
+# - Transcript: The text transcript to be analyzed
 
-# Data setup when using code.
-# input transcriptions_all.csv file with:
-# four columns: Subject, Trial,	Cue, Transcript
-# Subject is a number, trial is a number, cue is word, and transcript is the text.
 
+# Overview of the Code:
+# - Load required libraries and GloVe data
+# - Read in data to score
+# - Perform basic data cleaning, including removal of stopwords
+# - Define function to calculate similarities between words using GloVe embeddings
+# - Use similarity function to identify similar words for each cue (e.g., 'sand' for 'bbeach')
+# - Process narratives. For each word in a narrative, identify whether it belongs to the schema based on similarity
 
-# overview of code:
-# load in libraries and GloVe data
-# read in data to score
-# basic data cleaning, including removal of stopwords (i.e. common words such as 'the')
-# define functions to extract similarities between words, using GloVe
-# for each word, identify whether it belongs 
-
-# Checks to do by user: 
-# 1:
-# Rename cues if necessary. Glove works with individual words
-# so, for example, replace the cue "thanksgiving dinner" with "thanksgiving"
-# 2:
-# After the code runs, check the word lists it used (written out in 'schema_dictionaries.csv')
-# Sometimes many words will come from an alternative meaning of your cue word.
-# for example,  'stream' may capture netflix related terms instead
-# of the intended forest related terms. So, re-run with 'forest' as the new cue word in the input spreadsheet.
+# User Checks:
+# 1. Rename cues if necessary. GloVe works with individual words, so replace multi-word cues (e.g., "thanksgiving dinner") with single words (e.g., "thanksgiving").
+# 2. After running the code, check the word lists used (written out in 'schema_dictionaries.csv') to ensure words align with the intended meaning.
+#    - Sometimes, you will need to change your cue word ('stream' -> 'river' or 'forest') to ensure you are capturing the anticipated meaning (e.g., stream may create a list of netflix related words instead)
 
 
 #### ---- Set Working Directory ---- ####
 
-# set working directory to wherever this file is located
+# Set working directory to the location of this script
 currentPath <- dirname(rstudioapi::getActiveDocumentContext()$path)
 setwd(currentPath)
 
 #### ---- Load in Packages ---- ####
 
-if (!require("pacman")) {install.packages("pacman"); library('pacman')} 
+# Install and load 'pacman' package if not already installed
+if (!require("pacman")) {
+  install.packages("pacman")
+  library('pacman')
+}
 
-p_load("openxlsx", "dplyr",
-       "ggplot2", "ggpubr",
-       "hablar",
-       "stringr",
-       "glue", "qdap",
-       "textstem", 
-       "text2vec",
-       "qdapDictionaries", "tm",
-       "wordcloud", "lexicon",
-       "textclean",
-       "tidyverse", "tidytext",
-       "caret",
-       "text2vec"
-       ) 
+# Load necessary packages using 'pacman'
+pacman::p_load(
+  openxlsx, dplyr, ggplot2, ggpubr, stringr, glue, qdap, #hablar,
+  textstem, text2vec, qdapDictionaries, tm, wordcloud, lexicon,
+  textclean, tidyverse, tidytext, caret
+)
 
-# one thing to note: sometimes dplyr and other packages have conflicting
-# functions. So, if we're getting unexpected error messages, that's the
-# first place to look
-
+# Note: Conflicts may occur between packages (e.g., 'dplyr' and others).
+# If unexpected errors arise, check for conflicting functions.
 
 #### ---- Read in data ---- ####
 
-# must provide your folder location here (or just place it in the same folder as your code):
+# Read the transcriptions data (ensure the file is in the working directory)
+# that is, place your data in the same folder as your code, or specify the full path
+story <- read.csv('transcriptions_all.csv')
 
-story <- read.csv('trascriptions_all.csv')
+#### ----- Load GloVe Embedding Matrix ----- ####
 
-#### ----- Read in Glove matrix----- ####
-
-# reading in glove data takes a while
-
+# Load GloVe data (this may take a while). 
+# glove.Rdata should be in the same folder as the code, or specify the full path/location
 load('glove.Rdata')
 
+#### ---- Define Additional Stopwords to Remove  ---- ####
 
-#### ---- Define non-tidytext stopwords to remove ---- ####
+# Stop-words are words that don't carry much meaning, or words that we don't want to count
+# Removing these reduces the noise in our analyses.
 
-myStopwords = c("like" ,
-                "just" ,
-                "can",
-                "people",
-                "around",
-                "yeah",
-                "see",
-                "uh",
-                "really",
-                "um",
-                "kind",
-                "one",
-                "lot",
-                "it\'s",
-                "i\'m",
-                "nice",
-                "there's",
-                "get",
-                "time",
-                "also",
-                "know",
-                "see",
-                "hear",
-                "smell",
-                "touch"
+# Custom stopwords to exclude from analysis
+myStopwords <- c(
+  "like", "just", "can", "people", "around", "yeah", "see", "uh", "really", "um",
+  "kind", "one", "lot", "it's", "i'm", "nice", "there's", "get", "time", "also",
+  "know", "hear", "smell", "touch"
 )
 
-cueNames <- story$Cue %>% unique() %>% as.character() # get all cue names, remove so they dont get counted as details
-cueNames <- c(cueNames, cueNames %>% str_to_lower) # cast all cues to lowercase as well to remove those
+# Include cue words to prevent them from being counted as details
+cueNames <- unique(as.character(story$Cue))
+cueNames <- c(cueNames, tolower(cueNames))  # Include lowercase versions
 
+# Combine with stopwords from various sources
 # tm stopwords, snowball & SMART stopwords are already used by tidytext
 quanteda_stopwords1 <- stopwords::stopwords(language = 'en', source = 'nltk')
 quanteda_stopwords2 <- stopwords::stopwords(language = 'en', source = 'stopwords-iso')
 
+# Load additional stopwords from 'lexicon' package
 data(sw_loughran_mcdonald_long)
 lexicon_stopwords1 <- sw_loughran_mcdonald_long
 
-myStopwords <- c(myStopwords, quanteda_stopwords1, quanteda_stopwords2, lexicon_stopwords1, cueNames)
+# Merge all stopwords into one vector and remove duplicates
+myStopwords <- unique(c(
+  myStopwords, quanteda_stopwords1, quanteda_stopwords2,
+  lexicon_stopwords1, cueNames
+))
+  
 myStopwordsTibble <- tibble(word = myStopwords)
 
-#### ----- Basic data cleaning ----- ####
+#### ----- Basic Data Cleaning ----- ####
 
-# remove stop-words (i.e. words that don't carry much meaning, or words that we don't want to count),
-# all words to lowercase, strip additional whitespace (e.g. two spaces in between words),
-# and lemmatizing (i.e. turn word into base form, e.g. 'cars' -> 'car')
+# Cast all words to lowercase and strip additional whitespace (e.g. two spaces in between words),
+# Lemmatize, which involves turning words into their base form (e.g. 'cars' -> 'car')
+# We are using the tidy text format (https://www.tidytextmining.com/) for further analysis
+# This format involves one-token-per-row, where a token is a unit of text like a word
+# This involves modifying the data format. Let's start:
 
-# from https://www.tidytextmining.com/ --
-# Tidy text format is a table with one-token-per-row. 
-# A token is a meaningful unit of text, such as a word, 
-# that we are interested in using for analysis, and tokenization 
-# is the process of splitting text into tokens. This one-token-per-row structure
-# is in contrast to the ways text is often stored in current analyses,
-# perhaps as strings or in a document-term matrix.
-# For tidy text mining, the token that is stored in each row is most often a single word, 
-# but can also be an n-gram, sentence, or paragraph. 
-
-# from our original dataframe, create a one-token-per-row dataframe
+# Add an index column to keep track of each narrative
 story$index <- 1:nrow(story)
 
+# Convert the story data frame to a tibble and rename 'Transcript' to 'text'
 story_tibble <- tibble(story)
 story_tibble<- dplyr::rename(story_tibble,
                              text = Transcript)
 
-story_tibble <- story_tibble %>% 
-  convert(int(Trial, index),
-          fct(Cue,Subject),
-          chr(text))
+story_tibble <- story_tibble %>%
+  mutate(
+    Trial = as.integer(Trial),
+    index = as.integer(index),
+    Cue = as.factor(Cue),
+    Subject = as.factor(Subject),
+    text = as.character(text)
+  )
 
+# Split the text into one-word-per-row format (tokenize)
 tidy_story <- story_tibble %>%
   unnest_tokens(word, text)
 
+# Remove stopwords and then lemmatize words (reduce to base form; running -> run)
 tidy_story_clean <- tidy_story %>% 
   anti_join(get_stopwords()) %>% 
   anti_join(myStopwordsTibble) %>%
-  mutate(word_lemma = textstem::lemmatize_words(word)) #automatically lower cases 
+  mutate(word_lemma = textstem::lemmatize_words(word)) # Automatically lowercases words
 
+head(tidy_story_clean) # inspect the data
 
 #### ----- Define functions for similarity of words ----- ####
 
-# Purpose of each function:
-#
-# basis function for similarity: 
-#
-# find_similar_words
-#     - find n words that are most similar to the seed word
-#     - adapted from: https://blogs.rstudio.com/ai/posts/2017-12-22-word-embeddings-with-keras/
-
-# applying this functions to get schema scores: 
-# 
-# get_schema_score
-#     - for a narrative, and its corresponding cue, get schema score. return score and words identified.
-# get_schema_mismatch_score
-#     - for a narrative, take other cues, get schema scores based on if we were using different cues.
-
+# Function to find the top N most similar words to a given word using GloVe embeddings
 find_similar_words <- function(word, embedding_matrix, n = 5) {
-  similarities <- embedding_matrix[word, , drop = FALSE] %>%
-    sim2(embedding_matrix, y = ., method = "cosine")
-  similarities[,1] %>% sort(decreasing = TRUE) %>% head(n)
+  similarities <- sim2(
+    embedding_matrix,
+    embedding_matrix[word, , drop = FALSE],
+    method = "cosine"
+  )
+  similarities[, 1] %>%
+    sort(decreasing = TRUE) %>%
+    head(n)
 }
 
+# Function to compute the schema score for a narrative based on a cue
 get_schema_score <- function(cue, narrative, numWords){
   mostSimilarWords <- cue_topSimilarities[[as.character(cue)]]
   mostSimilarWords <- names(mostSimilarWords)
@@ -186,6 +159,7 @@ get_schema_score <- function(cue, narrative, numWords){
   return(list(totalWords_withTopX, narrativeDf_onlyTopXWords))
 }
 
+# Function to compute the mismatch schema score using other cues
 get_schema_mismatch_score <- function(cue, narrative, numWords){
   mismatchCues <- allCues[allCues != as.character(cue)]
   detailCounts <-c()
@@ -196,70 +170,67 @@ get_schema_mismatch_score <- function(cue, narrative, numWords){
   return(mean_misMatchDetails)
 }
 
+#### ----- Compute Similar Words for Each Cue ----- ####
 
-## set up, for each cue, a list of 50000 most similar ##
-
+# This is a preparatory step. For each cue, find a list of 50000 most similar words
 # We do this so that we can later access the stored similar words.
-# We  do this so that getting  similar words doesn't have to be done
-# multiple times, since it takes a while, and we can just
-# access the stored similar words
+# If we want to use the 10,000 most similar words, our functions allow you to pare down later.
+# But this prep allows us to not re-compute a time-consuming step every time.
 
-allCues <- as.character(unique(tidy_story_clean$Cue))
+# Retrieve all unique cues
+allCues <- unique(as.character(tidy_story_clean$Cue))
+
+# Initialize a list to store top similar words for each cue
 cue_topSimilarities <- list()
+numSimilarWords <- 50000  # Number of similar words to retrieve
 
-numSimilarWords <- 50000
-for(cue in allCues){
-  cue_topSimilarities[[cue]] <- find_similar_words(cue, embedding_matrix, numSimilarWords)
+# Find similar words for each cue
+for (cue in allCues) {
+  cue_topSimilarities[[cue]] <- find_similar_words(
+    cue,
+    embedding_matrix,
+    numSimilarWords
+  )
 }
 
-# the above takes a while to run. So you can save it once you've run it, by uncommenting:
-#save.image('glove_plus_cue_similarities.Rdata')
+# Optionally save the computed similarities to avoid rerunning
+# save(cue_topSimilarities, file = 'cue_topSimilarities.RData')
 
-# then, to avoid having to rerun everything again in the future, just uncomment and run:
-#load('glove_plus_cue_similarities.Rdata'
-)
+# Optionally load the computed similarities
+# load('cue_topSimilarities.RData')
 
-# save out the word lists used for calculating schema scores,
-# so that it is easy to look through for a sanity check.
-# for example, we want to be able to look at the dictionaries to ensure
-# that words like 'stream' refer to 'forest' rather than 'netflix'
+# Save the word lists so that we can examine them for sanity checking.
+cue_dictionaryWords <- lapply(cue_topSimilarities, names)
+cue_dictionaryWords_df <- as.data.frame(cue_dictionaryWords)
+write.csv(cue_dictionaryWords_df, 'schema_dictionaries.csv', row.names = FALSE)
 
-cue_dictionaryWords <- list()
-for(cue in allCues){
-  cue_dictionaryWords[[cue]] <- cue_topSimilarities[[cue]] %>% names
-}
-cue_dictionaryWords_df <- cue_dictionaryWords %>% as.data.frame()
-write.csv(cue_dictionaryWords_df, 'schema_dictionaries.csv')
 
-#### ----- Annotate all narratives ----- ####
+#### ----- Annotate All Narratives ----- ####
 
-# set up dataframe to fill in
-
+# Prepare a data frame to store the results.
+# Take the existing dataframe and add columns to fill in.
 story_scores <- story
-
-story_scores$NumTopWordsCount <- NULL
-story_scores$Top10000WordsCount <- NULL
-story_scores$Top10000Words_detailWords <- NULL
-story_scores$Top10000Words_mismatchCount <- NULL
 story_scores$nonStopword_wordCount <- NULL
+story_scores$SchemaWordsCount <- NULL
+story_scores$SchemaWordsIdentified <- NULL
+story_scores$SchemaMismatchCount <- NULL
 
-# for each response:
-# get story.
-# get total number of words (excluding stop words) in narrative
-# get total number of 
+# how big are we going to make our word lists/dictionaries?
+num_similar_words_to_use <- 10000
 
-for(i in tidy_story_clean$index %>% unique()) {
+# Process each narrative to compute schema scores.
+for(i in unique(tidy_story_clean$index)) {
   thisStory <- tidy_story_clean[tidy_story_clean$index == i,]
-  whichCue <- thisStory$Cue[1] %>% as.character()
+  whichCue <- as.character(thisStory$Cue[1])
 
-  schema_out <- get_schema_score(whichCue, thisStory, 10000)
-  story_scores[story_scores$index==i, "nonStopword_wordCount"] <- nrow(thisStory)
-  story_scores[story_scores$index==i, "Top10000WordsCount"] <- schema_out[[1]]
-  story_scores[story_scores$index==i, "Top10000Words_detailWords"] <- schema_out[[2]]$word %>% paste(collapse = " ")
-  story_scores[story_scores$index==i, "Top10000Words_mismatchCount"] <- get_schema_mismatch_score(whichCue, thisStory, 10000)
-
+  schema_out <- get_schema_score(whichCue, thisStory, num_similar_words_to_use)
+  story_scores[story_scores$index==i, "nonStopword_wordCount"] <- nrow(thisStory) ## get total number of words (excluding stop words) in narrative
+  story_scores[story_scores$index==i, "SchemaWordsCount"] <- schema_out[[1]]
+  story_scores[story_scores$index==i, "SchemaWordsIdentified"] <- schema_out[[2]]$word %>% paste(collapse = " ")
+  story_scores[story_scores$index==i, "SchemaMismatchCount"] <- get_schema_mismatch_score(whichCue, thisStory, num_similar_words_to_use)
 }
 
+# Write the annotated narratives to a CSV file
 write.csv(story_scores, 'narratives_scores.csv')
 
 
