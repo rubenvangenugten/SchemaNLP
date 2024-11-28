@@ -7,7 +7,7 @@ Remembering past events and imagining future events often requires individuals t
 
 A dictionary is simply a list of relevant words. For example, a dictionary for the cue 'beach' would contain words like 'sand' and 'waves'.
 
-The code provided here will produce scores according with methods described in ([Wynn et al., 2022](https://www.sciencedirect.com/science/article/pii/S1053810022000344?casa_token=x0LIK_gDaRsAAAAA:6LItAH6udi70-SEGwkJ3i3QAlHiqvzMIz9cPwRVPGzZch0Wgb-Ucf49ktBYPjMs4mdY9lSv-mQ)). Work is ongoing to develop and extensively validate this approach.
+The code provided here will produce scores according to methods described in ([Wynn et al., 2022](https://www.sciencedirect.com/science/article/pii/S1053810022000344?casa_token=x0LIK_gDaRsAAAAA:6LItAH6udi70-SEGwkJ3i3QAlHiqvzMIz9cPwRVPGzZch0Wgb-Ucf49ktBYPjMs4mdY9lSv-mQ)). Work is ongoing to develop and extensively validate this approach.
 
 Feel free to reach out to the authors with any questions. We can be contacted at r.vangenugten@northeastern.edu and jordwynn@uvic.ca
 
