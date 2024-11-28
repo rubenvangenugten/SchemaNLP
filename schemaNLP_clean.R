@@ -216,7 +216,7 @@ story_scores$SchemaWordsIdentified <- NULL
 story_scores$SchemaMismatchCount <- NULL
 
 # how big are we going to make our word lists/dictionaries?
-num_similar_words_to_use <- 10000
+num_similar_words_to_use <- 2000
 
 # Process each narrative to compute schema scores.
 for(i in unique(tidy_story_clean$index)) {
