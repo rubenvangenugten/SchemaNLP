@@ -1,4 +1,4 @@
-# SchemaNLP: Automated Scoring of Schematic Content using Natural Language Processing.
+** SchemaNLP: Automated Scoring of Schematic Content using Natural Language Processing.**
 
 Remembering past events and imagining future events often requires individuals to draw upon schematic knowledge, or knowledge about what typically happens in situations. To enable researchers to study schemas, we developed a measure of typical content in narratives. This script automates the scoring of schematic content in narratives by:
 
@@ -12,6 +12,7 @@ A dictionary is simply a list of relevant words. To illustrate this with an exam
 
 
 
+**Data Analysis Workflow**
 
 Below, we provide some information on how to use this code.
 
