@@ -10,6 +10,9 @@ A dictionary is simply a list of relevant words. To illustrate this with an exam
 
 
 
+
+
+
 Below, we provide some information on how to use this code.
 
 **Prerequisites**
