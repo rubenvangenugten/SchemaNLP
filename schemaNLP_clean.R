@@ -165,7 +165,7 @@ numSimilarWords <- 50000  # Number of similar words to retrieve
 # Find similar words for each cue
 for (cue in allCues) {
   cue_topSimilarities[[cue]] <- find_similar_words(
-    cue,
+    tolower(cue),
     embedding_matrix,
     numSimilarWords
   )
@@ -179,6 +179,7 @@ for (cue in allCues) {
 
 # Save the word lists so that we can examine them for sanity checking.
 cue_dictionaryWords <- lapply(cue_topSimilarities, names)
+cue_dictionaryWords <- lapply(cue_dictionaryWords, tolower)
 cue_dictionaryWords_df <- as.data.frame(cue_dictionaryWords)
 write.csv(cue_dictionaryWords_df, 'schema_dictionaries.csv', row.names = FALSE)
 
@@ -193,6 +194,7 @@ write.csv(cue_dictionaryWords_df, 'schema_dictionaries.csv', row.names = FALSE)
 get_schema_score <- function(cue, narrative, numWords){
   mostSimilarWords <- names(cue_topSimilarities[[as.character(cue)]]) # Accesses the list of words similar to the cue from cue_topSimilarities, which is a precomputed list where each cue maps to its vector of similar words. From that list extract names.
   mostSimilarWords <- mostSimilarWords[1:numWords] # the original exhaustive lists are 50,000 words. How long do we make the dictionary/list of most similar words? Selects the top numWords similar words.
+  mostSimilarWords <- mostSimilarWords %>% tolower()
   words_inNarrative <- mostSimilarWords[mostSimilarWords %in% as.character(narrative$word)] # words_inNarrative is a vector of words that are both highly similar to the cue and present in the narrative. identical to intersect(mostSimilarWords, as.character(narrative$word))
   narrativeDf_onlyTopXWords <- narrative[narrative$word %in% words_inNarrative,] # Filters the narrative data frame to include only rows where the word is in the schema word list
   totalWords_withTopX <- nrow(narrativeDf_onlyTopXWords) # Counts the number of rows (words) in the filtered narrative from the previous step. Result: totalWords_withTopX is an integer representing the number of words in the narrative that are in the schema word list (i.e., mostSimilarWords).
