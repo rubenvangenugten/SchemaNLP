@@ -20,7 +20,7 @@ Below, we provide some information on how to use this code.
 
 Before running the script, ensure you have:
 - R and RStudio installed on your computer.
-- GloVe embeddings downloaded (glove.Rdata). You can find the .Rdata file on google drive [here](https://drive.google.com/file/d/13huoIUVwwvOMr-pRAAI81hMzBnhL93rF/view)
+- GloVe embeddings downloaded (glove.Rdata). You can find the .Rdata file on google drive [here](https://drive.google.com/file/d/13huoIUVwwvOMr-pRAAI81hMzBnhL93rF/view). This corresponds to glove.840B.300d.
 - Enough space on your computer for the 3GB download of GloVe
 
 ### Data Preparation
@@ -34,6 +34,8 @@ Your input data should be a CSV file named transcriptions_all.csv, containing th
 
 
 Note: Ensure that the cue words are single words compatible with GloVe embeddings. If your cues are multi-word phrases (e.g., "thanksgiving dinner"), simplify them to single words (e.g., "thanksgiving").
+
+An example file is provided.
 
   
 ### Setting Up the Environment
@@ -58,12 +60,12 @@ Output Files:
       - nonStopword_wordCount: Total number of words in the narrative after removing stopwords. Stopwords are common or filler words (e.g., 'the', 'and', etc.)
       - SchemaWordsCount: Number of words matching the schema dictionary.
       - SchemaWordsIdentified: The actual words identified as schema-related.
-      - SchemaMismatchCount: Baseline score using other cues for comparison. (e.g., using all non-beach dictionarires for calculating schema scores for a beach narrative)
+      - SchemaMismatchCount: Baseline score using other cues in your dataframe for comparison. (e.g., using all non-beach dictionaries for calculating schema scores for a beach narrative).
 
 
 Understanding Schema Scores:
 - Schema Words Count: Higher counts indicate that the narrative contains more words related to the cue.
-- Mismatch Count: Provides a baseline to compare against, representing chance levels of schema word occurrence.
+- Mismatch Count: Provides a baseline to compare against, representing chance levels of schema word occurrence. 
 
 ### Customization and Tips
 
@@ -77,5 +79,6 @@ Understanding Schema Scores:
 - Slow Performance: The script may take a long time to run.  This is normal.
 - Cue Words Not Found: If a cue word is not in the GloVe vocabulary, choose an alternative word with a similar meaning. Verify that the cue word is correctly spelled and in lowercase.
 - Error in Working with Data: Ensure that the data types are correct in your input .csv file. For example, ensure that participant is a number rather than a string (e.g, 32 vs '32c4sx').
+- Missing mismatch count. The code computes mismatch scores based on all other cues in the dataframe. If you have data with only 1 cue, this will be blank in the example spreadsheet (e.g., like in the example csv here). If it contains only 1 cue, no mismatch cues are available.
 
 
